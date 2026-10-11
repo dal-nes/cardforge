@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CardForge — генератор карточек персонажей для TipsyChat</title>
+<meta name="description" content="Сборщик полной карточки персонажа: текст, HTML-оформление, JSON-память, промпты для изображений.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="top"><div class="wrap top-in">
+  <div class="logo"><span>CardForge</span><small>character card builder</small></div>
+  <div class="top-actions">
+    <button class="btn dice" id="btnDesign" title="Сгенерировать новую дизайн-концепцию (Блок 0)">🎲 Дизайн</button>
+    <button class="btn" id="btnExport">💾 Экспорт</button>
+    <button class="btn" id="btnImport">📥 Импорт</button>
+    <input type="file" id="importFile" accept=".json" hidden>
+    <button class="btn danger" id="btnReset">↺ Сбросить</button>
+  </div>
+</div></header>
+
+<div class="wrap">
+
+  <!-- БЛОК 0: дизайн-концепция -->
+  <div class="concept" id="conceptCard">
+    <div class="grow">
+      <div class="c-label">Дизайн-концепция · Блок 0</div>
+      <div class="c-mood" id="cMood">—</div>
+    </div>
+    <div class="c-item">Палитра<b id="cPalette">—</b><div class="swatches" id="cSwatches"></div></div>
+    <div class="c-item">Шрифтовая пара<b id="cFonts">—</b></div>
+    <div class="c-item">Декоративный мотив<b id="cMotif">—</b></div>
+    <div class="c-item">Геометрия<b id="cRadius">—</b></div>
+    <div class="c-item" style="min-width:160px">
+      <b style="display:block;margin-bottom:6px;font-size:12px">Тема</b>
+      <select id="paletteSelect" style="background:var(--bg2);border:1px solid var(--line2);border-radius:8px;color:var(--txt);padding:6px 10px;font:13px 'Segoe UI',sans-serif">
+        <option value="random">🎲 Случайная</option>
+        <option value="macos">🍎 macOS</option>
+        <option value="rpg">🎲 RPG</option>
+        <option value="custom">🎨 Своя</option>
+      </select>
+      <div class="pal-custom" id="palCustom">
+        <div class="fld"><label>Фон</label><input type="color" data-pal="bg" value="#0b0d14"></div>
+        <div class="fld"><label>Панель</label><input type="color" data-pal="panel" value="#151926"></div>
+        <div class="fld"><label>Линия</label><input type="color" data-pal="line" value="#262c40"></div>
+        <div class="fld"><label>Акцент 1</label><input type="color" data-pal="teal" value="#6fe3d0"></div>
+        <div class="fld"><label>Акцент 2</label><input type="color" data-pal="violet" value="#a08bfd"></div>
+        <div class="fld"><label>Акцент 3</label><input type="color" data-pal="amber" value="#f2b56b"></div>
+        <div class="fld"><label>Текст</label><input type="color" data-pal="txt" value="#e8ebf4"></div>
+        <div class="fld"><label>Мутный</label><input type="color" data-pal="mut" value="#8b93ab"></div>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <!-- ================= ФОРМА ================= -->
+    <div class="frm">
+      <details open>
+        <summary>🎬 Основное</summary>
+        <div class="body">
+          <div class="fld" id="fld-creator"><label>Ник автора · {{CREATOR}} <span class="badge req">обязательно</span></label><input type="text" data-f="creator" placeholder="YourNickname"></div>
+          <div class="fld" id="fld-cardTitle"><label>Название карточки · Блок 1 <span class="badge req">обязательно</span></label><input type="text" data-f="cardTitle" placeholder="The Night Auditor"></div>
+          <div class="fld"><label>Хук · HOOK_LINE <span class="badge opt">опционально</span></label><input type="text" data-f="hookLine" placeholder="Короткая атмосферная фраза-подзаголовок"></div>
+          <div class="row2">
+            <div class="fld"><label>Мир · WORLD_TAG <span class="badge opt">опционально</span></label><input type="text" data-f="worldTag" placeholder="modern / fantasy / cyberpunk"></div>
+            <div class="fld"><label>Подзаголовок сцены <span class="badge opt">опционально</span></label><input type="text" data-f="sceneSub" placeholder="Первая сцена — короткая строчка"></div>
+          </div>
+        </div>
+      </details>
+
+      <details>
+        <summary>🏷 Теги · Блок 0 <span class="cnt" id="tagCount">0 / 10</span></summary>
+        <div class="body">
+          <div class="hint" style="color:var(--mut);font-size:12px">Выбрано до 10. Первые два получат акцент «hot» в HTML.</div>
+          <div class="tagcloud" id="tagCloud">
+          <label class="tagchip"><input type="checkbox" value="Action"><span>Action</span></label>
+          <label class="tagchip"><input type="checkbox" value="Anime"><span>Anime</span></label>
+          <label class="tagchip"><input type="checkbox" value="AnyPOV"><span>AnyPOV</span></label>
+          <label class="tagchip"><input type="checkbox" value="Best Friend"><span>Best Friend</span></label>
+          <label class="tagchip"><input type="checkbox" value="Celebrity"><span>Celebrity</span></label>
+          <label class="tagchip"><input type="checkbox" value="Delinquent"><span>Delinquent</span></label>
+          <label class="tagchip"><input type="checkbox" value="Demon"><span>Demon</span></label>
+          <label class="tagchip"><input type="checkbox" value="Depressed"><span>Depressed</span></label>
+          <label class="tagchip"><input type="checkbox" value="Dominant"><span>Dominant</span></label>
+          <label class="tagchip"><input type="checkbox" value="Enemy to Lovers"><span>Enemy to Lovers</span></label>
+          <label class="tagchip"><input type="checkbox" value="Fan-made"><span>Fan-made</span></label>
+          <label class="tagchip"><input type="checkbox" value="Female POV"><span>Female POV</span></label>
+          <label class="tagchip"><input type="checkbox" value="Femboy"><span>Femboy</span></label>
+          <label class="tagchip"><input type="checkbox" value="Feral"><span>Feral</span></label>
+          <label class="tagchip"><input type="checkbox" value="Fictional"><span>Fictional</span></label>
+          <label class="tagchip"><input type="checkbox" value="Furry"><span>Furry</span></label>
+          <label class="tagchip"><input type="checkbox" value="Game"><span>Game</span></label>
+          <label class="tagchip"><input type="checkbox" value="Hero"><span>Hero</span></label>
+          <label class="tagchip"><input type="checkbox" value="Historical"><span>Historical</span></label>
+          <label class="tagchip"><input type="checkbox" value="Horror"><span>Horror</span></label>
+          <label class="tagchip"><input type="checkbox" value="Kuudere"><span>Kuudere</span></label>
+          <label class="tagchip"><input type="checkbox" value="LGBTQ+"><span>LGBTQ+</span></label>
+          <label class="tagchip"><input type="checkbox" value="Lore"><span>Lore</span></label>
+          <label class="tagchip"><input type="checkbox" value="Mafia"><span>Mafia</span></label>
+          <label class="tagchip"><input type="checkbox" value="Magical"><span>Magical</span></label>
+          <label class="tagchip"><input type="checkbox" value="Male POV"><span>Male POV</span></label>
+          <label class="tagchip"><input type="checkbox" value="Married Partner"><span>Married Partner</span></label>
+          <label class="tagchip"><input type="checkbox" value="Mature"><span>Mature</span></label>
+          <label class="tagchip"><input type="checkbox" value="MLM"><span>MLM</span></label>
+          <label class="tagchip"><input type="checkbox" value="Monster"><span>Monster</span></label>
+          <label class="tagchip"><input type="checkbox" value="Multiple"><span>Multiple</span></label>
+          <label class="tagchip"><input type="checkbox" value="Muscle"><span>Muscle</span></label>
+          <label class="tagchip"><input type="checkbox" value="Mystery"><span>Mystery</span></label>
+          <label class="tagchip"><input type="checkbox" value="Non-human"><span>Non-human</span></label>
+          <label class="tagchip"><input type="checkbox" value="Omegaverse"><span>Omegaverse</span></label>
+          <label class="tagchip"><input type="checkbox" value="Protective"><span>Protective</span></label>
+          <label class="tagchip"><input type="checkbox" value="Realistic"><span>Realistic</span></label>
+          <label class="tagchip"><input type="checkbox" value="Romantic"><span>Romantic</span></label>
+          <label class="tagchip"><input type="checkbox" value="RPG"><span>RPG</span></label>
+          <label class="tagchip"><input type="checkbox" value="Scenario"><span>Scenario</span></label>
+          <label class="tagchip"><input type="checkbox" value="Spicy"><span>Spicy</span></label>
+          <label class="tagchip"><input type="checkbox" value="Submissive"><span>Submissive</span></label>
+          <label class="tagchip"><input type="checkbox" value="Tsundere"><span>Tsundere</span></label>
+          <label class="tagchip"><input type="checkbox" value="Twins"><span>Twins</span></label>
+          <label class="tagchip"><input type="checkbox" value="Vampire"><span>Vampire</span></label>
+          <label class="tagchip"><input type="checkbox" value="Villain"><span>Villain</span></label>
+          <label class="tagchip"><input type="checkbox" value="Wholesome"><span>Wholesome</span></label>
+          <label class="tagchip"><input type="checkbox" value="WLW"><span>WLW</span></label>
+          <label class="tagchip"><input type="checkbox" value="Yandere"><span>Yandere</span></label>
+          </div>
+        </div>
+      </details>
+
+      <details>
+        <summary>📖 Описание · Блок 2</summary>
+        <div class="body">
+          <div class="fld" id="fld-descP1"><label>Абзац 1 — сеттинг и завязка <span class="badge req">обязательно</span></label><textarea class="tall" data-f="descP1"></textarea></div>
+          <div class="fld"><label>Абзац 2 — конфликт и интрига <span class="badge opt">опционально</span></label><textarea class="tall" data-f="descP2"></textarea></div>
+          <div class="fld"><label>Атмосферная строка <span class="opt">(курсив в конце)</span></label><input type="text" data-f="atmosphere"></div>
+        </div>
+      </details>
+
+      <details>
+        <summary>👤 Персонаж · Блок 4</summary>
+        <div class="body">
+          <div class="row3">
+            <div class="fld" id="fld-charName"><label>Имя <span class="badge req">обязательно</span></label><input type="text" data-f="charName"></div>
+            <div class="fld"><label>Возраст (18+) <span class="badge opt">опционально</span></label><input type="text" data-f="age" placeholder="27"></div>
+            <div class="fld"><label>Роль <span class="badge opt">опционально</span></label><input type="text" data-f="role" placeholder="antagonist / ally"></div>
+          </div>
+          <div class="fld"><label>Род занятий <span class="badge opt">опционально</span></label><input type="text" data-f="occupation"></div>
+          <div class="fld"><label>Внешность <span class="opt">— коротко, только визуально важное</span></label><textarea class="tall" data-f="appearance"></textarea></div>
+          <div class="fld"><label>Характер <span class="opt">— 3–5 черт, каждая через поведение</span></label><textarea class="tall" data-f="personality"></textarea></div>
+          <div class="fld"><label>Коронная цитата <span class="badge opt">опционально</span></label><input type="text" data-f="quote"></div>
+          <div class="fld"><label>История <span class="opt">— события, а не «было тяжёлое детство»</span></label><textarea class="tall" data-f="backstory"></textarea></div>
+          <div class="fld"><label>Связь с {{user}} <span class="badge opt">опционально</span></label><textarea class="tall" data-f="connection"></textarea></div>
+        </div>
+      </details>
+
+      <details>
+        <summary>👥 Второй персонаж <span class="opt">(опционально)</span></summary>
+        <div class="body">
+          <div class="row3">
+            <div class="fld"><label>Имя <span class="badge opt">опционально</span></label><input type="text" data-f="char2Name"></div>
+            <div class="fld"><label>Возраст (18+) <span class="badge opt">опционально</span></label><input type="text" data-f="char2Age"></div>
+            <div class="fld"><label>Роль <span class="badge opt">опционально</span></label><input type="text" data-f="char2Role"></div>
+          </div>
+          <div class="fld"><label>Внешность <span class="opt">— коротко</span></label><textarea class="tall" data-f="char2Appearance"></textarea></div>
+          <div class="fld"><label>Характер <span class="opt">— 3–5 черт</span></label><textarea class="tall" data-f="char2Personality"></textarea></div>
+          <div class="fld"><label>История <span class="opt">— ключевые события</span></label><textarea class="tall" data-f="char2Backstory"></textarea></div>
+          <div class="fld"><label>Связь с {{user}} <span class="badge opt">опционально</span></label><textarea class="tall" data-f="char2Connection"></textarea></div>
+          <div class="fld"><label>Манера речи <span class="badge opt">опционально</span></label><textarea data-f="char2SpeechManner"></textarea></div>
+          <div class="row2">
+            <div class="fld"><label>Цель <span class="badge opt">опционально</span></label><input type="text" data-f="char2Goal"></div>
+            <div class="fld"><label>Конфликт <span class="badge opt">опционально</span></label><input type="text" data-f="char2Conflict"></div>
+          </div>
+          <div class="fld"><label>Отношение к {{user}} <span class="opt">— со степенью и причиной</span></label><textarea data-f="char2RelationToUser"></textarea></div>
+        </div>
+      </details>
+
+      <details>
+        <summary>🗣 Речь и мотивация</summary>
+        <div class="body">
+          <div class="fld"><label>Манера речи <span class="opt">— тон, темп, лексика</span></label><textarea data-f="speechManner"></textarea></div>
+          <div class="fld"><label>Поведение речи <span class="opt">— паузы, полунамёки, спорит, уходит от тем</span></label><textarea data-f="speechBehavior"></textarea></div>
+          <div class="fld"><label>Ошибки мышления</label><textarea data-f="thinkingErrors"></textarea></div>
+          <div class="row2">
+            <div class="fld"><label>Любит</label><input type="text" data-f="likes"></div>
+            <div class="fld"><label>Не любит</label><input type="text" data-f="dislikes"></div>
+          </div>
+          <div class="fld"><label>Коронные фразы <span class="opt">— 2–4 с контекстом</span></label><textarea data-f="catchphrases"></textarea></div>
+          <div class="fld"><label>Слова-паразиты</label><input type="text" data-f="phrases"></div>
+          <div class="row2">
+            <div class="fld"><label>Цель</label><input type="text" data-f="goal"></div>
+            <div class="fld"><label>Конфликт</label><input type="text" data-f="conflict"></div>
+          </div>
+          <div class="fld"><label>Отношение к {{user}} <span class="opt">— со степенью и причиной</span></label><textarea data-f="relationToUser"></textarea></div>
+        </div>
+      </details>
+
+      <details>
+        <summary>🎭 Открытие сцены · Блок 3</summary>
+        <div class="body">
+          <div class="row2">
+            <div class="fld"><label>Время · чч:мм</label><input type="text" data-f="timeSc" placeholder="02:47"></div>
+            <div class="fld"><label>Дата</label><input type="text" data-f="dateSc" placeholder="13 октября 2026, вторник"></div>
+          </div>
+          <div class="row2">
+            <div class="fld"><label>Место</label><input type="text" data-f="placeSc"></div>
+            <div class="fld"><label>Погода / температура</label><input type="text" data-f="weatherSc"></div>
+          </div>
+          <div class="fld"><label>Повествование 1 <span class="opt">— свет, запахи, звуки; {{user}} уже внутри сцены</span></label><textarea class="tall" data-f="narr1"></textarea></div>
+          <div class="fld"><label>Реплика персонажа 1</label><textarea data-f="dlg1"></textarea></div>
+          <div class="fld"><label>Повествование 2</label><textarea class="tall" data-f="narr2"></textarea></div>
+          <div class="fld"><label>Внутренний монолог <span class="opt">— опционально</span></label><textarea data-f="mono"></textarea></div>
+          <div class="row2">
+            <div class="fld"><label>Флэшбэк-заголовок <span class="opt">— опц.</span></label><input type="text" data-f="flashLabel"></div>
+            <div class="fld"><label>Имя второго говорящего <span class="opt">— опц.</span></label><input type="text" data-f="secondSpeaker"></div>
+          </div>
+          <div class="fld"><label>Флэшбэк-текст <span class="opt">— опционально</span></label><textarea data-f="flashText"></textarea></div>
+          <div class="fld"><label>Реплика второго говорящего <span class="opt">— опционально</span></label><textarea data-f="dlg2"></textarea></div>
+          <div class="fld"><label>Реплика персонажа 2 (финал сцены)</label><textarea data-f="dlg3"></textarea></div>
+          <div class="fld"><label>Финальный крючок <span class="opt">— место для ответа {{user}}</span></label><textarea data-f="finalHook"></textarea></div>
+        </div>
+      </details>
+
+      <details>
+        <summary>🔞 NSFW · Блок 4</summary>
+        <div class="body">
+          <div class="fld"><label>NSFW-подсказка для ИИ <span class="opt">— уровень откровенности, стиль, особенности</span></label><textarea class="tall" data-f="nsfwText"></textarea></div>
+          <label class="checkline"><input type="checkbox" id="nsfwPrompts"> Генерировать NSFW-промпты для изображений (режим 4)</label>
+        </div>
+      </details>
+
+      <details>
+        <summary>⚙️ Механика и трекеры · Блок 5 <span class="opt">(по умолчанию выключено)</span></summary>
+        <div class="body">
+          <div class="fld"><label>Кастомная механика <span class="opt">— параметры, правила изменения, пороги, формат в конце ответа</span></label><textarea class="tall" data-f="mechText" placeholder="Оставь пустым, если используешь только трекеры ниже"></textarea></div>
+
+          <div class="tracker-group">
+            <h4>❤️ Видимые трекеры — отображаются в каждом ответе</h4>
+            <div class="tracker" data-tracker="affection">
+              <div class="tracker-head"><input type="checkbox" data-tog="affection"><span class="tracker-title">❤️ Affection / relationship meter</span></div>
+              <div class="tracker-desc">Numeric bar. Milestone events log to EVENT MEMORY.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_affection_rules" placeholder="0–30: cold and distant... 31–60: polite... 61–90: warm..."></textarea></div>
+            </div>
+            <div class="tracker" data-tracker="suspicion">
+              <div class="tracker-head"><input type="checkbox" data-tog="suspicion"><span class="tracker-title">🔍 Suspicion / trust meter</span></div>
+              <div class="tracker-desc">Inconsistencies logged to EVENT MEMORY for soft recall.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_suspicion_rules" placeholder="Пороги поведения при разных значениях"></textarea></div>
+            </div>
+            <div class="tracker" data-tracker="tension">
+              <div class="tracker-head"><input type="checkbox" data-tog="tension"><span class="tracker-title">⚡ Tension meter</span></div>
+              <div class="tracker-desc">Unresolved tension carries forward across scene breaks.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_tension_rules" placeholder="Пороги нарастания и разрядки"></textarea></div>
+            </div>
+            <div class="tracker" data-tracker="resource">
+              <div class="tracker-head"><input type="checkbox" data-tog="resource"><span class="tracker-title">💰 Resource / currency tracker</span></div>
+              <div class="tracker-desc">Items consumed on use. Good for heist, RPG, survival.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_resource_rules" placeholder="Стартовое значение, трата, пополнение"></textarea></div>
+            </div>
+            <div class="tracker" data-tracker="time">
+              <div class="tracker-head"><input type="checkbox" data-tog="time"><span class="tracker-title">🕐 Time / countdown tracker</span></div>
+              <div class="tracker-desc">Time + location + optional countdown. Pairs with time skip engine.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_time_rules" placeholder="Формат отображения, шаги, триггеры"></textarea></div>
+            </div>
+            <div class="tracker" data-tracker="datetime">
+              <div class="tracker-head"><input type="checkbox" data-tog="datetime"><span class="tracker-title">📅 Time / date / location display</span></div>
+              <div class="tracker-desc">Displays at top of every response. 12-hour format. Updates on every time or location change.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_datetime_rules" placeholder="Формат шапки сообщения"></textarea></div>
+            </div>
+          </div>
+
+          <div class="tracker-group">
+            <h4>🧠 Скрытые трекеры — никогда не отображаются, только пороги</h4>
+            <div class="tracker" data-tracker="intrigue">
+              <div class="tracker-head"><input type="checkbox" data-tog="intrigue"><span class="tracker-title">🧠 Hidden intrigue tracker</span></div>
+              <div class="tracker-desc">How intriguing the character finds {{user}}. Surfaces through dialogue texture only.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_intrigue_rules" placeholder="Пороги: когда начинает задавать вопросы, когда сам раскрывается"></textarea></div>
+            </div>
+            <div class="tracker" data-tracker="rivalry">
+              <div class="tracker-head"><input type="checkbox" data-tog="rivalry"><span class="tracker-title">😤 Hidden rivalry / jealousy tracker</span></div>
+              <div class="tracker-desc">Multi-character triangular dynamics. Jealousy decays; memory of events does not.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_rivalry_rules" placeholder="Пороги ревности и соперничества"></textarea></div>
+            </div>
+            <div class="tracker" data-tracker="guard">
+              <div class="tracker-head"><input type="checkbox" data-tog="guard"><span class="tracker-title">🛡️ Hidden guard / vulnerability tracker</span></div>
+              <div class="tracker-desc">Emotional availability. Drop-moments logged to EVENT MEMORY.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_guard_rules" placeholder="Когда опускает защиту, когда вновь закрывается"></textarea></div>
+            </div>
+            <div class="tracker" data-tracker="danger">
+              <div class="tracker-head"><input type="checkbox" data-tog="danger"><span class="tracker-title">⚠️ Hidden danger / threat tracker</span></div>
+              <div class="tracker-desc">Scene stakes and pacing. Consequences persist until resolved in-scene.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_danger_rules" placeholder="Пороги угрозы, последствия"></textarea></div>
+            </div>
+            <div class="tracker" data-tracker="relationship">
+              <div class="tracker-head"><input type="checkbox" data-tog="relationship"><span class="tracker-title">🔓 Hidden relationship stage tracker</span></div>
+              <div class="tracker-desc">Stage tracked silently — no notifications, no display. For fully immersive bots.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_relationship_rules" placeholder="Этапы: 1 Stranger → 5 Entangled. Условия перехода."></textarea></div>
+            </div>
+          </div>
+
+          <div class="tracker-group">
+            <h4>🌑 Иммерсивный режим — скрытые версии видимых трекеров</h4>
+            <div class="tracker" data-tracker="affection_h">
+              <div class="tracker-head"><input type="checkbox" data-tog="affection_h"><span class="tracker-title">❤️ Affection — hidden</span></div>
+              <div class="tracker-desc">Warmth and distance shown through behaviour only. No meter.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_affection_h_rules" placeholder="Поведенческие пороги без цифр"></textarea></div>
+            </div>
+            <div class="tracker" data-tracker="suspicion_h">
+              <div class="tracker-head"><input type="checkbox" data-tog="suspicion_h"><span class="tracker-title">🔍 Suspicion — hidden</span></div>
+              <div class="tracker-desc">Wariness and openness govern tone only. No meter.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_suspicion_h_rules" placeholder="Тоновые пороги"></textarea></div>
+            </div>
+            <div class="tracker" data-tracker="tension_h">
+              <div class="tracker-head"><input type="checkbox" data-tog="tension_h"><span class="tracker-title">⚡ Tension — hidden</span></div>
+              <div class="tracker-desc">Escalation and rupture thresholds active. No meter.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_tension_h_rules" placeholder="Пороги эскалации"></textarea></div>
+            </div>
+            <div class="tracker" data-tracker="resource_h">
+              <div class="tracker-head"><input type="checkbox" data-tog="resource_h"><span class="tracker-title">💰 Resource — hidden</span></div>
+              <div class="tracker-desc">Loss tracked internally. Characters notice absence through narration only.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_resource_h_rules" placeholder="Внутренний учёт ресурсов"></textarea></div>
+            </div>
+            <div class="tracker" data-tracker="time_h">
+              <div class="tracker-head"><input type="checkbox" data-tog="time_h"><span class="tracker-title">🕐 Time / countdown — hidden</span></div>
+              <div class="tracker-desc">Time and countdown tracked in CORE MEMORY. Urgency surfaces through narration only.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_time_h_rules" placeholder="Внутренний таймер"></textarea></div>
+            </div>
+            <div class="tracker" data-tracker="datetime_h">
+              <div class="tracker-head"><input type="checkbox" data-tog="datetime_h"><span class="tracker-title">📅 Time / date / location — hidden</span></div>
+              <div class="tracker-desc">Tracked in CORE MEMORY. Surfaces through environmental anchors and soft recall only.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_datetime_h_rules" placeholder="Якоря времени/места в повествовании"></textarea></div>
+            </div>
+          </div>
+
+          <div class="tracker-group">
+            <h4>✨ Дополнительные трекеры</h4>
+            <div class="tracker" data-tracker="reputation">
+              <div class="tracker-head"><input type="checkbox" data-tog="reputation"><span class="tracker-title">👑 Reputation / fame tracker</span></div>
+              <div class="tracker-desc">How the world sees the character. Affects NPC reactions and available choices.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_reputation_rules" placeholder="Пороги известности, реакции мира"></textarea></div>
+            </div>
+            <div class="tracker" data-tracker="sanity">
+              <div class="tracker-head"><input type="checkbox" data-tog="sanity"><span class="tracker-title">🌀 Sanity / stress tracker</span></div>
+              <div class="tracker-desc">Mental state under pressure. Hallucinations, paranoia, or clarity thresholds.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_sanity_rules" placeholder="Пороги стресса, последствия"></textarea></div>
+            </div>
+            <div class="tracker" data-tracker="corruption">
+              <div class="tracker-head"><input type="checkbox" data-tog="corruption"><span class="tracker-title">🖤 Corruption / morality tracker</span></div>
+              <div class="tracker-desc">Moral decay or redemption arc. Affects choices and endings.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_corruption_rules" placeholder="Пороги морального выбора"></textarea></div>
+            </div>
+            <div class="tracker" data-tracker="loyalty">
+              <div class="tracker-head"><input type="checkbox" data-tog="loyalty"><span class="tracker-title">⚔️ Loyalty / faction tracker</span></div>
+              <div class="tracker-desc">Faction standing and betrayals. Shifts alliances and unlocks content.</div>
+              <div class="tracker-rules"><textarea data-f="tracker_loyalty_rules" placeholder="Пороги преданности фракциям"></textarea></div>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details>
+        <summary>💬 Примеры диалогов · Блок 6</summary>
+        <div class="body">
+          <div class="fld"><label>4–6 пар: метка времени → реплика {{user}} → ответ {{char}} → механика</label><textarea class="tall mono" data-f="dlgExamples" spellcheck="false"></textarea></div>
+        </div>
+      </details>
+
+      <details>
+        <summary>🛠 Настройки ответа и примечания · Блоки 7–8</summary>
+        <div class="body">
+          <div class="fld"><label>Дополнительные ограничения <span class="opt">— к универсальным правилам</span></label><textarea data-f="extraRules"></textarea></div>
+          <div class="fld"><label>Примечание автора · Блок 8 <span class="opt">— 3–5 советов игроку</span></label><textarea class="tall" data-f="authorNotes"></textarea></div>
+        </div>
+      </details>
+
+      <details>
+        <summary>🖼 Медиа-ссылки</summary>
+        <div class="body">
+          <div class="fld"><label>Обложка · COVER_URL <span class="badge opt">опционально</span></label><input type="text" data-f="coverUrl" placeholder="https://..."></div>
+          <div class="fld"><label>Подпись к обложке</label><input type="text" data-f="coverCap"></div>
+          <div class="row2">
+            <div class="fld"><label>Фото 1 (галерея)</label><input type="text" data-f="photo1"></div>
+            <div class="fld"><label>Подпись</label><input type="text" data-f="photo1cap"></div>
+          </div>
+          <div class="row2">
+            <div class="fld"><label>Фото 2 (галерея)</label><input type="text" data-f="photo2"></div>
+            <div class="fld"><label>Подпись</label><input type="text" data-f="photo2cap"></div>
+          </div>
+          <div class="row2">
+            <div class="fld"><label>Кадр сцены · PHOTO_URL_3</label><input type="text" data-f="photo3"></div>
+            <div class="fld"><label>Подпись кадра</label><input type="text" data-f="photo3cap"></div>
+          </div>
+          <div class="row2">
+            <div class="fld"><label>Аудио · AUDIO_URL</label><input type="text" data-f="audioUrl"></div>
+            <div class="fld"><label>Трек</label><input type="text" data-f="trackName" placeholder="Track Name"></div>
+          </div>
+          <div class="fld"><label>Подзаголовок трека</label><input type="text" data-f="trackSub"></div>
+        </div>
+      </details>
+
+      <details>
+        <summary>🗂 JSON-файлы подгрузочной памяти</summary>
+        <div class="body">
+          <div class="note">Вставь готовые файлы — валидность проверится автоматически. Пустые файлы в выдачу не попадают.</div>
+        <div class="fld">
+          <label>world_lore.json — мир, лор, тайны, фракции, условия раскрытия</label>
+          <textarea class="tall mono" data-json="world_lore" spellcheck="false" placeholder='{"entries":[ ... ]}'></textarea>
+        </div>
+        <div class="fld">
+          <label>npc_factions.json — NPC, мотивация, секреты, реакции</label>
+          <textarea class="tall mono" data-json="npc_factions" spellcheck="false" placeholder='{"entries":[ ... ]}'></textarea>
+        </div>
+        <div class="fld">
+          <label>locations.json — локации, атмосфера, объекты, подсказки</label>
+          <textarea class="tall mono" data-json="locations" spellcheck="false" placeholder='{"entries":[ ... ]}'></textarea>
+        </div>
+        <div class="fld">
+          <label>relationship_mechanics.json — доверие, симпатия, пороги, анти-спам</label>
+          <textarea class="tall mono" data-json="relationship_mechanics" spellcheck="false" placeholder='{"entries":[ ... ]}'></textarea>
+        </div>
+        <div class="fld">
+          <label>dialogue_patterns.json — стиль речи, привычки, эмоциональная вариативность</label>
+          <textarea class="tall mono" data-json="dialogue_patterns" spellcheck="false" placeholder='{"entries":[ ... ]}'></textarea>
+        </div>
+        <div class="fld">
+          <label>nsfw_profile.json — интимный профиль, границы, прогрессия</label>
+          <textarea class="tall mono" data-json="nsfw_profile" spellcheck="false" placeholder='{"entries":[ ... ]}'></textarea>
+        </div>
+        <div class="fld">
+          <label>quests_events.json — события, цепочки, последствия</label>
+          <textarea class="tall mono" data-json="quests_events" spellcheck="false" placeholder='{"entries":[ ... ]}'></textarea>
+        </div>
+        <div class="fld">
+          <label>items_artifacts.json — предметы, свойства, сюжетное значение</label>
+          <textarea class="tall mono" data-json="items_artifacts" spellcheck="false" placeholder='{"entries":[ ... ]}'></textarea>
+        </div>
+        <div class="fld">
+          <label>image_map.json — URL изображений и условия показа</label>
+          <textarea class="tall mono" data-json="image_map" spellcheck="false" placeholder='{"entries":[ ... ]}'></textarea>
+        </div>
+        </div>
+      </details>
+
+      <details>
+        <summary>🎨 Промпты для изображений</summary>
+        <div class="body">
+          <div class="fld"><label>Визуальный отпечаток · фиксируется и повторяется дословно</label><textarea data-f="genderAge" placeholder="27-year-old adult woman, silver undercut pixie hair, heterochromia..."></textarea></div>
+          <div class="fld"><label>Одежда · OUTFIT</label><textarea data-f="outfitDesc"></textarea></div>
+          <div class="fld"><label>Якорь стиля · STYLE <span class="opt">— пусто = премиум аниме-арт по умолчанию</span></label><textarea data-f="styleAnchor"></textarea></div>
+          <div class="fld"><label>Базовый негатив <span class="opt">— пусто = базовый список + защита от underage</span></label><textarea data-f="negBase"></textarea></div>
+          <div class="fld"><label>Локации · режим 3, одна на строку</label><textarea data-f="locationsList" placeholder="Rooftop greenhouse"></textarea></div>
+          <div class="fld"><label>Предметы · режим 5, один на строку</label><textarea data-f="itemsList" placeholder="Brass pocket watch"></textarea></div>
+        </div>
+      </details>
+
+      <details>
+        <summary>🎨 Мои HTML-макеты</summary>
+        <div class="body">
+          <div class="note">Загружай свои .html-шаблоны с плейсхолдерами {{cardTitle}}, {{charName}}, {{coverUrl}} и т.д. Они сохранятся в браузере.</div>
+          <div class="fld">
+            <label>Макет для Описания (Блок A)</label>
+            <select id="templateA" style="width:100%;background:var(--bg2);border:1px solid var(--line2);border-radius:9px;color:var(--txt);padding:9px 11px;font:14px 'Segoe UI',sans-serif"></select>
+          </div>
+          <div class="fld">
+            <label>Макет для Открытия (Блок B)</label>
+            <select id="templateB" style="width:100%;background:var(--bg2);border:1px solid var(--line2);border-radius:9px;color:var(--txt);padding:9px 11px;font:14px 'Segoe UI',sans-serif"></select>
+          </div>
+          <div class="fld">
+            <label>Загрузить файл макета (.html / .txt)</label>
+            <input type="file" id="templateFile" accept=".html,.txt" style="padding:6px 0;background:transparent;border:0;color:var(--txt)">
+          </div>
+          <div class="fld">
+            <label>Редактор макета <span class="opt">— вставь HTML и сохрани</span></label>
+            <textarea class="tall mono" id="templateEditor" spellcheck="false" placeholder='<div class="my-card">&#10;  <h1>{{cardTitle}}</h1>&#10;  <p>{{descP1}}</p>&#10;</div>'></textarea>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn" id="btnSaveTemplate">💾 Сохранить как новый</button>
+            <button class="btn danger" id="btnDeleteTemplate">🗑 Удалить выбранный</button>
+          </div>
+          <div class="note" style="margin-top:10px">Стандартные макеты «Default A» и «Default B» нельзя удалить. Плейсхолдеры: {{cardTitle}}, {{charName}}, {{creator}}, {{hookLine}}, {{worldTag}}, {{descP1}}, {{descP2}}, {{atmosphere}}, {{tagsHtml}}, {{coverUrl}}, {{coverCap}}, {{appearance}}, {{personality}}, {{quote}}, {{backstory}}, {{connection}}, {{age}}, {{role}}, {{occupation}}, {{mechText}}, {{photo1}}, {{photo1cap}}, {{photo2}}, {{photo2cap}}, {{audioUrl}}, {{trackName}}, {{trackSub}}, {{char2Name}}… Для Блока B: {{timeSc}}, {{dateSc}}, {{placeSc}}, {{weatherSc}}, {{narr1}}, {{dlg1}}, {{narr2}}, {{mono}}, {{flashLabel}}, {{flashText}}, {{secondSpeaker}}, {{dlg2}}, {{dlg3}}, {{finalHook}}, {{photo3}}, {{photo3cap}}.</div>
+        </div>
+      </details>
+    </div>
+
+    <!-- ================= ВЫВОД ================= -->
+    <section class="out">
+      <div class="tabs" id="tabs">
+        <button class="tab on" data-tab="card">📋 Карточка</button>
+        <button class="tab" data-tab="htmlA">🎨 HTML · Описание</button>
+        <button class="tab" data-tab="htmlB">🎬 HTML · Открытие</button>
+        <button class="tab" data-tab="json">🗂 JSON</button>
+        <button class="tab" data-tab="prompts">🖼 Промпты</button>
+      </div>
+      <div class="toolbar">
+        <span class="out-status" id="outStatus">—</span>
+        <span class="sp"></span>
+        <button class="btn ghost" id="btnPreview">👁 Предпросмотр</button>
+        <button class="btn" id="btnCopy">📋 Копировать</button>
+        <button class="btn" id="btnDownload">⬇ Скачать</button>
+      </div>
+      <div class="out-body" id="outBody"></div>
+    </section>
+  </main>
+
+  <footer>CardForge · генератор по шаблонам «Промпт-Архитектор», «HTML-шаблон карточки» и «Генератор промптов для изображений» · все персонажи 18+</footer>
+</div>
+<div class="toast" id="toast"></div>
+<script src="js/app.js"></script>
+</body>
+</html>
